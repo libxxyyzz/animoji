@@ -31,8 +31,11 @@ void main() {
     temp = vec4(temp.x, 1.0-temp.y, temp.zw);
     temp = vec4(temp.xy * 2.0 - 1.0, temp.zw);
 
+//    vec4 temp = vec4(in_position.x, in_position.y, 0.0, 1.0);
+//    temp = vec4(temp.x, 1.0-temp.y, temp.zw);
+//    temp = vec4(temp.xy * 2.0 - 1.0, temp.zw);
 
     gl_Position = temp;
-    gl_PointSize = 10.0;
+    gl_PointSize = 2.0;
 
 }

@@ -2,29 +2,27 @@ package com.github.animoji
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.opengl.GLES20
 import android.opengl.GLES30
+import android.opengl.GLES31
 import android.opengl.Matrix
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import com.github.animoji.base.FaceDetectorActivity
 import com.github.animoji.manager.RotationManager
 import com.github.animoji.opengl.GLFramebuffer
+import com.github.animoji.opengl.GLProgram
 import com.github.animoji.opengl.GLShader
 import com.github.animoji.opengl.GLVao
 import com.github.animoji.render.GLRender
-import java.nio.ByteBuffer
-import android.opengl.GLES31.*
-import com.github.animoji.opengl.GLProgram
+import kotlin.concurrent.fixedRateTimer
 
-class MainActivity : FaceDetectorActivity() {
+class TestLandmarkActivity : FaceDetectorActivity() {
 
     companion object {
         fun launch(context: Context) {
-            context.startActivity(Intent(context, MainActivity::class.java))
+            context.startActivity(Intent(context, TestLandmarkActivity::class.java))
         }
     }
 
@@ -34,19 +32,18 @@ class MainActivity : FaceDetectorActivity() {
     private val mRender by lazy { GLRender(this) }
     private val mRotationManager by lazy { RotationManager(this) }
     private val mLocalMatrix = FloatArray(16)
-
     private var mFramebuffer: GLFramebuffer? = null
 
     private val mLandmarkVao by lazy { GLVao(landmarks) }
     private val mLandmarkVert by lazy {
         GLShader(
-            GL_VERTEX_SHADER,
-            readAssert("shader/landmark.vert")
+            GLES31.GL_VERTEX_SHADER,
+            readAssert("shader/test_landmark.vert")
         )
     }
     private val mLandmarkFrag by lazy {
         GLShader(
-            GL_FRAGMENT_SHADER,
+            GLES31.GL_FRAGMENT_SHADER,
             readAssert("shader/landmark.frag")
         )
     }
@@ -59,7 +56,7 @@ class MainActivity : FaceDetectorActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_test_landmark)
         mRotationManager.onCreate()
         Matrix.setIdentityM(mLocalMatrix, 0)
         mSurfaceView.holder.addCallback(object : SurfaceHolder.Callback {
@@ -84,83 +81,34 @@ class MainActivity : FaceDetectorActivity() {
         })
     }
 
-
-
-
     override fun onUpdate(oes: Int) {
-        // test origin image
-//        if (mFramebuffer == null)
-//            mFramebuffer = GLFramebuffer(cameraWidth, cameraHeight)
-//        mFramebuffer?.bind()
-//        mRender.drawOes(
-//            oes,
-//            0,
-//            0,
-//            mLocalMatrix, cameraWidth,
-//            cameraHeight,
-//            cameraWidth,
-//            cameraHeight
-//        )
-//        test(cameraWidth, cameraHeight)
-
-        // show oes directly
-//        mRender.drawOes(
-//            oes,
-//            cameraRotation,
-//            mRotationManager.displayRotation,
-//            cameraMatrix,
-//            cameraWidth,
-//            cameraHeight,
-//            mSurfaceWidth,
-//            mSurfaceHeight
-//        )
-
-
-        var texWidth = cameraWidth
-        var texHeight = cameraHeight
-        if (cameraRotation == 90 || cameraRotation == 270) {
-            texWidth = cameraHeight
-            texHeight = cameraWidth
-        }
         if (mFramebuffer == null)
-            mFramebuffer = GLFramebuffer(texWidth, texHeight)
+            mFramebuffer = GLFramebuffer(cameraWidth, cameraHeight)
         mFramebuffer?.bind()
-
-        // draw oes
         mRender.drawOes(
             oes,
-            cameraRotation,
             0,
-            cameraMatrix, cameraWidth,
+            0,
+            mLocalMatrix,
+            cameraWidth,
             cameraHeight,
-            texWidth,
-            texHeight
+            cameraWidth,
+            cameraHeight
         )
 
-        // draw landmarks
         mLandmarkVao.update(landmarks)
         mLandmarkProgram.use()
         mLandmarkVao.bind()
-        val locMvp = mLandmarkProgram.getUniformLocation("texTransform")
-        glUniformMatrix4fv(locMvp, 1, false, cameraMatrix, 0)
-        glDrawArrays(GLES30.GL_POINTS, 0, 106)
+        GLES31.glDrawArrays(GLES30.GL_POINTS, 0, 106)
         mLandmarkVao.unbind()
 
 
-//        test(texWidth, texHeight)
-
+        test(cameraWidth, cameraHeight)
         mFramebuffer?.unbind()
 
         mRender.drawRGBA(
-            mFramebuffer!!.texture, 0,
-            mRotationManager.displayRotation,
-            mLocalMatrix,
-            texWidth,
-            texHeight,
-            mSurfaceWidth,
-            mSurfaceHeight
+            mFramebuffer!!.texture, cameraRotation, mRotationManager.displayRotation,
+            cameraMatrix, cameraWidth, cameraHeight, mSurfaceWidth, mSurfaceHeight
         )
     }
-
-
 }

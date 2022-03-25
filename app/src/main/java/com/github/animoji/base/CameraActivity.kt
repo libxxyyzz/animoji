@@ -27,11 +27,15 @@ open class CameraActivity : EglActivity() {
 
     open fun onUpdate(oes: Int) {}
     open fun onAnalysis(proxy: ImageProxy) {}
+    protected fun isFront(): Boolean {
+        return mCameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA
+    }
 
     private var mCameraSurfaceTexture: SurfaceTexture? = null
     private var mCameraSurface: Surface? = null
     private val mCameraTexture = IntArray(1)
-    private val mCameraSize = Size(720,1280)
+    private val mCameraSize = Size(480, 640)
+    private val mCameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
 
     private var mPermissionManager = PermissionManager(this, Manifest.permission.CAMERA) {
         if (it) {
@@ -51,7 +55,7 @@ open class CameraActivity : EglActivity() {
         mCameraSurfaceTexture = SurfaceTexture(mCameraTexture[0])
         mCameraSurfaceTexture?.setDefaultBufferSize(cameraWidth, cameraHeight)
         mCameraSurfaceTexture?.setOnFrameAvailableListener({
-            if (mCameraSurfaceTexture != null && !isDestroyed){
+            if (mCameraSurfaceTexture != null && !isDestroyed) {
                 it.updateTexImage()
                 it.getTransformMatrix(cameraMatrix)
                 onUpdate(mCameraTexture[0])
@@ -85,7 +89,7 @@ open class CameraActivity : EglActivity() {
                     return@addListener
                 provider.bindToLifecycle(
                     this@CameraActivity,
-                    CameraSelector.DEFAULT_FRONT_CAMERA,
+                    mCameraSelector,
                     preview, analysis
                 )
                 preview.setSurfaceProvider(eglExecutor) { request ->
