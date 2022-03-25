@@ -33,11 +33,17 @@ open class FaceDetectorActivity : CameraActivity() {
             MNNCVImageFormat.GRAY,
             detectConfig,
             cameraRotation,
-            cameraRotation,// 原图方向关键点
-//            0,// 需要正向的人脸关键点
-            MNNFlipType.FLIP_NONE
+//            cameraRotation,// 原图方向关键点
+            0,// 需要正向的人脸关键点
+            if (isFront()) MNNFlipType.FLIP_Y else MNNFlipType.FLIP_NONE
         )
 
+        var rWidth = width
+        var rHeight = height
+        if (cameraRotation == 90 || cameraRotation == 270) {
+            rWidth = height
+            rHeight = width
+        }
         Log.e(TAG, "onAnalysis: -- ${report?.size ?: 0}")
 
         if (!report.isNullOrEmpty()) {
@@ -47,8 +53,8 @@ open class FaceDetectorActivity : CameraActivity() {
             pitch = face.pitch
             roll = face.roll
             for (i in 0 until 106) {
-                landmarks[i * 2] /= width + 0f
-                landmarks[i * 2 + 1] /= height + 0f
+                landmarks[i * 2] /= rWidth + 0f
+                landmarks[i * 2 + 1] /= rHeight + 0f
             }
         } else {
             for (i in 0 until 212) landmarks[i] = 0f

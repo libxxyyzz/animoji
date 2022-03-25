@@ -18,6 +18,7 @@ import com.github.animoji.opengl.GLVao
 import com.github.animoji.render.GLRender
 import java.nio.ByteBuffer
 import android.opengl.GLES31.*
+import android.widget.TextView
 import com.github.animoji.opengl.GLProgram
 
 class MainActivity : FaceDetectorActivity() {
@@ -29,6 +30,7 @@ class MainActivity : FaceDetectorActivity() {
     }
 
     private val mSurfaceView: SurfaceView by lazy { findViewById(R.id.surface_view) }
+    private val mTvToggle: TextView by lazy { findViewById(R.id.tv_toggle) }
     private var mSurfaceWidth = 0
     private var mSurfaceHeight = 0
     private val mRender by lazy { GLRender(this) }
@@ -36,7 +38,6 @@ class MainActivity : FaceDetectorActivity() {
     private val mLocalMatrix = FloatArray(16)
 
     private var mFramebuffer: GLFramebuffer? = null
-
     private val mLandmarkVao by lazy { GLVao(landmarks) }
     private val mLandmarkVert by lazy {
         GLShader(
@@ -62,6 +63,9 @@ class MainActivity : FaceDetectorActivity() {
         setContentView(R.layout.activity_main)
         mRotationManager.onCreate()
         Matrix.setIdentityM(mLocalMatrix, 0)
+        mTvToggle.setOnClickListener {
+            toggle()
+        }
         mSurfaceView.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
                 registerSurface(holder.surface)
@@ -83,8 +87,6 @@ class MainActivity : FaceDetectorActivity() {
             }
         })
     }
-
-
 
 
     override fun onUpdate(oes: Int) {
@@ -141,14 +143,10 @@ class MainActivity : FaceDetectorActivity() {
         mLandmarkVao.update(landmarks)
         mLandmarkProgram.use()
         mLandmarkVao.bind()
-        val locMvp = mLandmarkProgram.getUniformLocation("texTransform")
-        glUniformMatrix4fv(locMvp, 1, false, cameraMatrix, 0)
         glDrawArrays(GLES30.GL_POINTS, 0, 106)
         mLandmarkVao.unbind()
 
-
 //        test(texWidth, texHeight)
-
         mFramebuffer?.unbind()
 
         mRender.drawRGBA(
@@ -161,6 +159,5 @@ class MainActivity : FaceDetectorActivity() {
             mSurfaceHeight
         )
     }
-
 
 }

@@ -31,11 +31,17 @@ open class CameraActivity : EglActivity() {
         return mCameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA
     }
 
+    protected fun toggle() {
+        mCameraSelector = if (isFront()) CameraSelector.DEFAULT_BACK_CAMERA
+        else CameraSelector.DEFAULT_FRONT_CAMERA
+        openCamera()
+    }
+
     private var mCameraSurfaceTexture: SurfaceTexture? = null
     private var mCameraSurface: Surface? = null
     private val mCameraTexture = IntArray(1)
     private val mCameraSize = Size(480, 640)
-    private val mCameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+    private var mCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
     private var mPermissionManager = PermissionManager(this, Manifest.permission.CAMERA) {
         if (it) {
@@ -78,6 +84,7 @@ open class CameraActivity : EglActivity() {
         ProcessCameraProvider.getInstance(this).apply {
             addListener({
                 val provider = get()
+                provider.unbindAll()
                 val preview = Preview.Builder()
                     .setTargetResolution(mCameraSize)
                     .build()
