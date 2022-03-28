@@ -56,6 +56,18 @@ open class CameraActivity : EglActivity() {
         mPermissionManager.request()
     }
 
+    override fun onDestroy() {
+        eglExecutor.execute {
+            mCameraSurface?.release()
+            mCameraSurface = null
+            mCameraSurfaceTexture?.release()
+            mCameraSurfaceTexture = null
+            GLES20.glDeleteTextures(1, mCameraTexture, 0)
+        }
+        super.onDestroy()
+    }
+
+
     private fun createCameraSurface() {
         GLES20.glGenTextures(1, mCameraTexture, 0)
         mCameraSurfaceTexture = SurfaceTexture(mCameraTexture[0])
@@ -69,14 +81,6 @@ open class CameraActivity : EglActivity() {
             }
         }, eglHandler)
         mCameraSurface = Surface(mCameraSurfaceTexture)
-    }
-
-    private fun releaseCameraSurface() {
-        mCameraSurface?.release()
-        mCameraSurface = null
-        mCameraSurfaceTexture?.release()
-        mCameraSurfaceTexture = null
-        GLES20.glDeleteTextures(1, mCameraTexture, 0)
     }
 
 
@@ -105,12 +109,12 @@ open class CameraActivity : EglActivity() {
                     request.setTransformationInfoListener(cameraExecutor) {
                         cameraRotation = it.rotationDegrees
                     }
-                    createCameraSurface()
+                    if (mCameraSurface == null)
+                        createCameraSurface()
                     request.provideSurface(
                         mCameraSurface!!,
                         eglExecutor
                     ) {
-                        releaseCameraSurface()
                     }
                 }
             }, cameraExecutor)

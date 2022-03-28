@@ -53,6 +53,8 @@ class MainActivity : FaceDetectorActivity() {
     }
     private val mLandmarkProgram by lazy { GLProgram(mLandmarkVert, mLandmarkFrag) }
 
+    private val pigRender by lazy { PigRender(this) }
+
     override fun onDestroy() {
         super.onDestroy()
         mRotationManager.onDestroy()
@@ -145,6 +147,9 @@ class MainActivity : FaceDetectorActivity() {
         mLandmarkVao.bind()
         glDrawArrays(GLES30.GL_POINTS, 0, 106)
         mLandmarkVao.unbind()
+
+        // draw pig
+        pigRender.draw()
 
 //        test(texWidth, texHeight)
         mFramebuffer?.unbind()
