@@ -148,8 +148,10 @@ class MainActivity : FaceDetectorActivity() {
         glDrawArrays(GLES30.GL_POINTS, 0, 106)
         mLandmarkVao.unbind()
 
+        glEnable(GL_DEPTH_TEST)
         // draw pig
         pigRender.draw()
+        glDisable(GL_DEPTH_TEST)
 
 //        test(texWidth, texHeight)
         mFramebuffer?.unbind()

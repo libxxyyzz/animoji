@@ -33,7 +33,7 @@ fun Context.copyFileFromAsserts(inp: String, oup: String) {
     oupStream.close()
 }
 
-fun Context.copyDirFromAsserts(dir: String, dest: String) {
+fun Context.copyDirFromAsserts(dir: String) {
     val files = assets.list(dir) ?: return
     val destDir = File(filesDir.absolutePath + File.separator + dir)
     if (!destDir.exists()) destDir.mkdirs()
@@ -43,7 +43,7 @@ fun Context.copyDirFromAsserts(dir: String, dest: String) {
         if (f.contains(".")) {
             copyFileFromAsserts(inp, oup)
         } else {
-            copyDirFromAsserts(inp, oup)
+            copyDirFromAsserts(inp)
         }
     }
 }
@@ -69,7 +69,7 @@ class AnimojiApplication : Application() {
             })
 
         thread {
-            copyDirFromAsserts("mask", filesDir.absolutePath)
+            copyDirFromAsserts("mask")
         }
     }
 }

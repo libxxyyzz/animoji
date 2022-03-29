@@ -4,7 +4,7 @@ import android.opengl.GLES20
 import android.opengl.GLES30.*
 import java.nio.FloatBuffer
 
-class GLVao constructor(vertexes: FloatArray) {
+class GLVao constructor(vertexes: FloatArray,size :Int = 2) {
 
     private val temp = IntArray(1)
     var buffer = 0
@@ -23,7 +23,7 @@ class GLVao constructor(vertexes: FloatArray) {
         glGenVertexArrays(1, temp, 0).apply { vao = temp[0] }
         glBindVertexArray(vao)
         glEnableVertexAttribArray(0)
-        glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * 4, 0)
+        glVertexAttribPointer(0, size, GL_FLOAT, false, size * 4, 0)
         glBindVertexArray(GL_NONE)
 
         glBindBuffer(GL_ARRAY_BUFFER, GL_NONE)
