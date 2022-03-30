@@ -2,8 +2,6 @@ package com.github.animoji
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.opengl.GLES20
 import android.opengl.GLES30
 import android.opengl.Matrix
 import android.os.Bundle
@@ -12,14 +10,11 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import com.github.animoji.base.FaceDetectorActivity
 import com.github.animoji.manager.RotationManager
-import com.github.animoji.opengl.GLFramebuffer
-import com.github.animoji.opengl.GLShader
-import com.github.animoji.opengl.GLVao
 import com.github.animoji.render.GLRender
-import java.nio.ByteBuffer
 import android.opengl.GLES31.*
+import android.view.MotionEvent
 import android.widget.TextView
-import com.github.animoji.opengl.GLProgram
+import com.github.animoji.opengl.*
 
 class MainActivity : FaceDetectorActivity() {
 
@@ -38,6 +33,7 @@ class MainActivity : FaceDetectorActivity() {
     private val mLocalMatrix = FloatArray(16)
 
     private var mFramebuffer: GLFramebuffer? = null
+    private var mRenderBuffer: GLRenderBuffer? = null
     private val mLandmarkVao by lazy { GLVao(landmarks) }
     private val mLandmarkVert by lazy {
         GLShader(
@@ -52,8 +48,8 @@ class MainActivity : FaceDetectorActivity() {
         )
     }
     private val mLandmarkProgram by lazy { GLProgram(mLandmarkVert, mLandmarkFrag) }
-
     private val pigRender by lazy { PigRender(this) }
+    private var isSurfaceReleased = false
 
     override fun onDestroy() {
         super.onDestroy()
@@ -72,6 +68,7 @@ class MainActivity : FaceDetectorActivity() {
             override fun surfaceCreated(holder: SurfaceHolder) {
                 registerSurface(holder.surface)
                 makeCurrent(holder.surface)
+                isSurfaceReleased = false
             }
 
             override fun surfaceChanged(
@@ -85,13 +82,45 @@ class MainActivity : FaceDetectorActivity() {
             }
 
             override fun surfaceDestroyed(holder: SurfaceHolder) {
+                isSurfaceReleased = true
                 unRegisterSurface(holder.surface)
+                postInEgl {
+                    pigRender.release()
+                }
             }
         })
+        mSurfaceView.setOnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                lastY = event.y
+            } else if (event.action == MotionEvent.ACTION_MOVE) {
+//                if (lastY > event.y) {
+//                    pigRender.degreeY -= 3
+//                } else {
+//                    pigRender.degreeY += 3
+//                }
+//                if (lastX > event.x) {
+//                    pigRender.degreeX -= 3
+//                } else {
+//                    pigRender.degreeX += 3
+//                }
+                lastY = event.y
+                lastX = event.x
+                Log.e(TAG, "onCreate: ${pigRender.degreeY}")
+            }
+            true
+        }
     }
+
+    var lastY = 0f
+    var lastX = 0f
 
 
     override fun onUpdate(oes: Int) {
+        if (!mSurfaceView.isAttachedToWindow || isSurfaceReleased)
+            return
+//        glEnable(GL_CULL_FACE)
+//        glCullFace(GL_BACK)
+
         // test origin image
 //        if (mFramebuffer == null)
 //            mFramebuffer = GLFramebuffer(cameraWidth, cameraHeight)
@@ -129,6 +158,11 @@ class MainActivity : FaceDetectorActivity() {
         if (mFramebuffer == null)
             mFramebuffer = GLFramebuffer(texWidth, texHeight)
         mFramebuffer?.bind()
+        if (mRenderBuffer == null) {
+            mRenderBuffer = GLRenderBuffer(texWidth, texHeight)
+            mRenderBuffer?.bindFrameBuffer()
+        }
+
 
         // draw oes
         mRender.drawOes(
@@ -141,17 +175,24 @@ class MainActivity : FaceDetectorActivity() {
             texHeight
         )
 
-        // draw landmarks
-        mLandmarkVao.update(landmarks)
-        mLandmarkProgram.use()
-        mLandmarkVao.bind()
-        glDrawArrays(GLES30.GL_POINTS, 0, 106)
-        mLandmarkVao.unbind()
+        if (hadFace) {
+            // draw landmarks
+            mLandmarkVao.update(landmarks)
+            mLandmarkProgram.use()
+            mLandmarkVao.bind()
+            glDrawArrays(GLES30.GL_POINTS, 0, 106)
+            mLandmarkVao.unbind()
 
-        glEnable(GL_DEPTH_TEST)
-        // draw pig
-        pigRender.draw()
-        glDisable(GL_DEPTH_TEST)
+            // draw pig
+            glEnable(GL_DEPTH_TEST)
+            glClear(GL_DEPTH_BUFFER_BIT)
+            pigRender.draw(
+                texWidth / texHeight.toFloat(), yaw, pitch, roll,
+                landmarks[46 * 2], landmarks[46 * 2 + 1],
+                faceRect.width() / texWidth.toFloat()
+            )
+            glDisable(GL_DEPTH_TEST)
+        }
 
 //        test(texWidth, texHeight)
         mFramebuffer?.unbind()

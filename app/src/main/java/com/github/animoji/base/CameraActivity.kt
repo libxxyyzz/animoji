@@ -41,7 +41,7 @@ open class CameraActivity : EglActivity() {
     private var mCameraSurface: Surface? = null
     private val mCameraTexture = IntArray(1)
     private val mCameraSize = Size(480, 640)
-    private var mCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    private var mCameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
 
     private var mPermissionManager = PermissionManager(this, Manifest.permission.CAMERA) {
         if (it) {

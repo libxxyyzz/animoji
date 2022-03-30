@@ -14,6 +14,9 @@ struct JNIVertex {
     float ver_z;
     float tex_x;
     float tex_y;
+//    float tx;
+//    float ty;
+//    float tz;
 };
 
 

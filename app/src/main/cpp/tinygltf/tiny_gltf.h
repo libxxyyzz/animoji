@@ -713,7 +713,7 @@ struct NormalTextureInfo {
   int texCoord;    // The set index of texture's TEXCOORD attribute used for
                    // texture coordinate mapping.
   double scale;    // scaledNormal = normalize((<sampled normal texture value>
-                   // * 2.0 - 1.0) * vec3(<normal scale>, <normal scale>, 1.0))
+                   // * 2.0 - 1.0) * JNIVec3(<normal scale>, <normal scale>, 1.0))
 
   Value extras;
   ExtensionMap extensions;

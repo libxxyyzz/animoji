@@ -78,7 +78,7 @@ public:
     /** Construct from an axis-angle pair */
     aiQuaterniont( aiVector3t<TReal> axis, TReal angle);
 
-    /** Construct from a normalized quaternion stored in a vec3 */
+    /** Construct from a normalized quaternion stored in a JNIVec3 */
     explicit aiQuaterniont( aiVector3t<TReal> normalized);
 
     /** Returns a matrix representation of the quaternion */

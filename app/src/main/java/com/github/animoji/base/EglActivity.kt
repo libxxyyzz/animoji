@@ -86,4 +86,8 @@ open class EglActivity : AppCompatActivity() {
     fun swapBuffer() {
         mCurrentSurface?.swapBuffers()
     }
+
+    fun postInEgl(runnable: Runnable) {
+        eglHandler.sync(runnable)
+    }
 }

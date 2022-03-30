@@ -11,22 +11,36 @@
 std::vector<JNIMesh *> meshes;
 std::unordered_map<std::string, JNITexture *> materials_texture;
 
-float max_x = 0;
-float max_y = 0;
-float max_z = 0;
+struct JNIVec3 {
+    float x, y, z;
+};
+
+float max_xyz[3] = {0.0};
+float min_xyz[3] = {0.0};
+
+JNIVec3 get_model_adjust() {
+    JNIVec3 vec3{};
+    vec3.x = (min_xyz[0] + max_xyz[0]) / 2;
+    vec3.y = (min_xyz[1] + max_xyz[1]) / 2;
+    vec3.z = (min_xyz[2] + max_xyz[2]) / 2;
+    return vec3;
+}
 
 float jni_max_x(float x) {
-    max_x = std::max(abs(x), max_x);
+    max_xyz[0] = std::max(x, max_xyz[0]);
+    min_xyz[0] = std::min(x, min_xyz[0]);
     return x;
 }
 
 float jni_max_y(float y) {
-    max_y = std::max(abs(y), max_y);
+    max_xyz[1] = std::max(y, max_xyz[1]);
+    min_xyz[1] = std::min(y, min_xyz[1]);
     return y;
 }
 
 float jni_max_z(float z) {
-    max_z = std::max(abs(z), max_z);
+    max_xyz[2] = std::max(z, max_xyz[2]);
+    min_xyz[2] = std::min(z, min_xyz[2]);
     return z;
 }
 
@@ -61,19 +75,24 @@ void get_all_material(const aiScene *scene) {
             glBindTexture(GL_TEXTURE_2D, t->id);
             glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, x, y);
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, x, y, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             assert(glGetError() == GL_NO_ERROR);
             glBindTexture(GL_TEXTURE_2D, GL_NONE);
             stbi_image_free(data);
             materials_texture[item] = t;
         }
     }
-    for (auto mesh : meshes) {
-        for (auto & vertex : mesh->vertexes) {
-            vertex.ver_x /= max_x;
-            vertex.ver_y /= max_y;
-            vertex.ver_z /= max_z;
-        }
-    }
+//    for (auto mesh : meshes) {
+//        for (auto &vertex : mesh->vertexes) {
+//            vertex.ver_x /= max_x;
+//            vertex.ver_y /= max_y;
+//            vertex.ver_z /= max_z;
+//        }
+//    }
 }
 
 void get_all_meshes(const aiScene *scene, aiNode *node) {
@@ -88,7 +107,6 @@ void get_all_meshes(const aiScene *scene, aiNode *node) {
     }
 }
 
-
 JNIMesh::JNIMesh(const aiScene *scene, aiMesh *mesh) : scene(scene), mesh(mesh) {
 
     for (int i = 0; i < mesh->mNumVertices; ++i) {
@@ -102,6 +120,9 @@ JNIMesh::JNIMesh(const aiScene *scene, aiMesh *mesh) : scene(scene), mesh(mesh) 
             v.tex_x = temp.x;
             v.tex_y = temp.y;
         }
+//        v.tx = mesh->mTangents[i].x;
+//        v.ty = mesh->mTangents[i].y;
+//        v.tz = mesh->mTangents[i].z;
         vertexes.emplace_back(v);
     }
 
@@ -115,16 +136,12 @@ JNIMesh::JNIMesh(const aiScene *scene, aiMesh *mesh) : scene(scene), mesh(mesh) 
             indices.push_back(face.mIndices[j]);
         }
     }
-
-
     if (mesh->mMaterialIndex >= 0) {
         const aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
         get_textures(material, aiTextureType_SPECULAR);
         get_textures(material, aiTextureType_DIFFUSE);
         get_textures(material, aiTextureType_AMBIENT);
     }
-//    glEnable(GL_DEPTH_TEST);
-//    glCullFace(GL_BACK);
 }
 
 void JNIMesh::get_textures(const aiMaterial *material, aiTextureType type) {
@@ -140,7 +157,7 @@ void JNIMesh::get_textures(const aiMaterial *material, aiTextureType type) {
 }
 
 void JNIMesh::draw() {
-    if (vao == nullptr){
+    if (vao == nullptr) {
         vao = new JNIVao(vertexes, indices);
     }
     int i = 0;
@@ -153,16 +170,54 @@ void JNIMesh::draw() {
     assert(glGetError() == GL_NO_ERROR);
 }
 
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_github_animoji_PigRender_00024Companion_nativeDraw(JNIEnv *env, jobject thiz) {
-//    glFrontFace(GL_CCW);
     for (auto mesh : meshes) {
         mesh->draw();
     }
-//    glFrontFace(GL_CCW);
 //    meshes[0]->draw();
-
-//    glClearColor(1.0,0.0,0.0,1.0);
-//    glClear(GL_COLOR_BUFFER_BIT);
+//    meshes[1]->draw();
+//    meshes[2]->draw();
+}
+extern "C"
+JNIEXPORT jfloatArray JNICALL
+Java_com_github_animoji_PigRender_00024Companion_nativeGetModelAdjust(JNIEnv *env, jobject thiz) {
+    auto fa = env->NewFloatArray(3);
+    JNIVec3 vec3 = get_model_adjust();
+    env->SetFloatArrayRegion(fa, 0, 3, reinterpret_cast<const jfloat *>(&vec3));
+    return fa;
+}
+extern "C"
+JNIEXPORT jfloat JNICALL
+Java_com_github_animoji_PigRender_00024Companion_nativeGetMaxViewDistance(JNIEnv *env,
+                                                                          jobject thiz) {
+    float x = abs(max_xyz[0]) + abs(min_xyz[0]);
+    float y = abs(max_xyz[1]) + abs(min_xyz[1]);
+    float z = abs(max_xyz[2]) + abs(min_xyz[2]);
+    x /= 2, y /= 2, z /= 2;
+    return fmax(x, fmax(y, z));
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_github_animoji_PigRender_00024Companion_nativeRelease(JNIEnv *env, jobject thiz) {
+    for (auto m:meshes) {
+        delete m;
+    }
+    meshes.clear();
+    for (const auto& item: materials_texture) {
+        delete item.second;
+    }
+    materials_texture.clear();
+}
+extern "C"
+JNIEXPORT jfloatArray JNICALL
+Java_com_github_animoji_PigRender_00024Companion_nativeGetMaxXY(JNIEnv *env, jobject thiz) {
+    float xy[2];
+    xy[0] = abs(max_xyz[0]-min_xyz[0]);
+    xy[1] = abs(max_xyz[1]-min_xyz[1]);
+    auto r = env->NewFloatArray(2);
+    env->SetFloatArrayRegion(r,0,2,xy);
+    return r;
 }

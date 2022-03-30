@@ -1,5 +1,6 @@
 package com.github.animoji.base
 
+import android.graphics.Rect
 import android.util.Log
 import androidx.camera.core.ImageProxy
 import com.alibaba.android.mnnkit.entity.FaceDetectConfig
@@ -11,6 +12,8 @@ import com.github.animoji.faceDetector
 open class FaceDetectorActivity : CameraActivity() {
 
     protected val landmarks = FloatArray(212)
+    protected val faceRect = Rect()
+    protected var hadFace = false
     protected var roll = 0f // 旋转
     protected var pitch = 0f // 点头
     protected var yaw = 0f//  摇头
@@ -47,7 +50,9 @@ open class FaceDetectorActivity : CameraActivity() {
         Log.e(TAG, "onAnalysis: -- ${report?.size ?: 0}")
 
         if (!report.isNullOrEmpty()) {
+            hadFace = true
             val face = report[0]
+            faceRect.set(face.rect)
             System.arraycopy(face.keyPoints, 0, landmarks, 0, 212)
             yaw = face.yaw
             pitch = face.pitch
@@ -58,6 +63,7 @@ open class FaceDetectorActivity : CameraActivity() {
             }
         } else {
             for (i in 0 until 212) landmarks[i] = 0f
+            hadFace = false
         }
         proxy.close()
     }
