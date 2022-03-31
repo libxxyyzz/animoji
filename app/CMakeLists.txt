@@ -8,7 +8,12 @@ add_library(${target}
         src/main/cpp/jni_mesh.cpp
         src/main/cpp/jni_vao.cpp
         )
-target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/assimp/include)
+target_include_directories(
+        ${target} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/assimp/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/eos/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/eos/3rdparty
+)
 target_include_directories(${target} PRIVATE ${CMAKE_BINARY_DIR})
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/libfacedetection/${CMAKE_ANDROID_ARCH_ABI})
 target_link_libraries(${target}

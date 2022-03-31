@@ -7,6 +7,7 @@
 #include <android/log.h>
 #include <unordered_map>
 #include <jni.h>
+//#include <eos/e>
 
 std::vector<JNIMesh *> meshes;
 std::unordered_map<std::string, JNITexture *> materials_texture;
@@ -108,7 +109,21 @@ void get_all_meshes(const aiScene *scene, aiNode *node) {
 }
 
 JNIMesh::JNIMesh(const aiScene *scene, aiMesh *mesh) : scene(scene), mesh(mesh) {
-
+//    if (mesh->mNumAnimMeshes)
+    for (int i = 0; i < mesh->mNumAnimMeshes; ++i) {
+        auto tMesh = mesh->mAnimMeshes[i];
+        mWeight.emplace_back(tMesh->mWeight);
+        std::vector<JNIVertex> v;
+        for (int j = 0; j < tMesh->mNumVertices; ++j) {
+            JNIVertex tv{};
+            auto item = tMesh->mVertices[j];
+            tv.ver_x = item.x;
+            tv.ver_y = item.y;
+            tv.ver_z = item.z;
+            v.emplace_back(tv);
+        }
+        mAniVertex.emplace_back(v);
+    }
     for (int i = 0; i < mesh->mNumVertices; ++i) {
         JNIVertex v{};
         aiVector3D m_vertex = mesh->mVertices[i];
@@ -142,6 +157,10 @@ JNIMesh::JNIMesh(const aiScene *scene, aiMesh *mesh) : scene(scene), mesh(mesh) 
         get_textures(material, aiTextureType_DIFFUSE);
         get_textures(material, aiTextureType_AMBIENT);
     }
+    if (!mWeight.empty()){
+        mWeight[13] = 1.0;
+        mWeight[14] = 1.0;
+    }
 }
 
 void JNIMesh::get_textures(const aiMaterial *material, aiTextureType type) {
@@ -160,6 +179,20 @@ void JNIMesh::draw() {
     if (vao == nullptr) {
         vao = new JNIVao(vertexes, indices);
     }
+    if (!mWeight.empty()){
+        std::vector<JNIVertex> uVertexes = vertexes;
+        for (int i = 0; i < mWeight.size(); ++i) {
+            auto weight = mWeight[i];
+            auto vert = mAniVertex[i];
+            for (auto item : vert) {
+                uVertexes[i].ver_x = (1.0f - weight) * uVertexes[i].ver_x + weight * item.ver_x;
+                uVertexes[i].ver_y = (1.0f - weight) * uVertexes[i].ver_y + weight * item.ver_y;
+                uVertexes[i].ver_z = (1.0f - weight) * uVertexes[i].ver_z + weight * item.ver_z;
+            }
+        }
+        vao->update(uVertexes.data(), uVertexes.size() * sizeof(JNIVertex));
+    }
+
     int i = 0;
     for (auto &item:textures) {
         glActiveTexture(GL_TEXTURE0 + i);
@@ -206,7 +239,7 @@ Java_com_github_animoji_PigRender_00024Companion_nativeRelease(JNIEnv *env, jobj
         delete m;
     }
     meshes.clear();
-    for (const auto& item: materials_texture) {
+    for (const auto &item: materials_texture) {
         delete item.second;
     }
     materials_texture.clear();
@@ -214,10 +247,11 @@ Java_com_github_animoji_PigRender_00024Companion_nativeRelease(JNIEnv *env, jobj
 extern "C"
 JNIEXPORT jfloatArray JNICALL
 Java_com_github_animoji_PigRender_00024Companion_nativeGetMaxXY(JNIEnv *env, jobject thiz) {
-    float xy[2];
-    xy[0] = abs(max_xyz[0]-min_xyz[0]);
-    xy[1] = abs(max_xyz[1]-min_xyz[1]);
-    auto r = env->NewFloatArray(2);
-    env->SetFloatArrayRegion(r,0,2,xy);
+    float xy[3];
+    xy[0] = abs(max_xyz[0] - min_xyz[0]);
+    xy[1] = abs(max_xyz[1] - min_xyz[1]);
+    xy[2] = abs(max_xyz[2] - min_xyz[2]);
+    auto r = env->NewFloatArray(3);
+    env->SetFloatArrayRegion(r, 0, 3, xy);
     return r;
 }

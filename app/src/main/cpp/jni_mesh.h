@@ -55,6 +55,8 @@ public:
     };
 
     std::vector<JNIVertex> vertexes;
+    std::vector<std::vector<JNIVertex>> mAniVertex;
+    std::vector<float> mWeight;
     std::vector<unsigned int> indices;
 };
 

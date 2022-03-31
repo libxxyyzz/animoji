@@ -32,6 +32,8 @@ public:
     GLuint index{};
     GLuint vao{};
 
+    void update(void* data,size_t size);
+
     void draw() const;
 };
 

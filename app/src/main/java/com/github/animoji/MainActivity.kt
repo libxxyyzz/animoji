@@ -163,6 +163,7 @@ class MainActivity : FaceDetectorActivity() {
             mRenderBuffer?.bindFrameBuffer()
         }
 
+        // draw pig
 
         // draw oes
         mRender.drawOes(
@@ -183,9 +184,9 @@ class MainActivity : FaceDetectorActivity() {
             glDrawArrays(GLES30.GL_POINTS, 0, 106)
             mLandmarkVao.unbind()
 
-            // draw pig
             glEnable(GL_DEPTH_TEST)
             glClear(GL_DEPTH_BUFFER_BIT)
+
             pigRender.draw(
                 texWidth / texHeight.toFloat(), yaw, pitch, roll,
                 landmarks[46 * 2], landmarks[46 * 2 + 1],
@@ -193,6 +194,7 @@ class MainActivity : FaceDetectorActivity() {
             )
             glDisable(GL_DEPTH_TEST)
         }
+
 
 //        test(texWidth, texHeight)
         mFramebuffer?.unbind()

@@ -5,7 +5,6 @@ import android.content.res.AssetManager
 import android.opengl.GLES20
 import android.opengl.GLES31.*
 import android.opengl.Matrix
-import android.util.Log
 import com.github.animoji.opengl.GLProgram
 import com.github.animoji.opengl.GLShader
 
@@ -44,7 +43,7 @@ class PigRender constructor(val context: Context) {
     private val mProgram by lazy { GLProgram(mVert, mFrag) }
     private val mModelAdjust by lazy { nativeGetModelAdjust() }
     private val mMaxViewDistance by lazy { nativeGetMaxViewDistance() }
-    private val mMaxXY by lazy { nativeGetMaxXY() }
+    private val mMaxXYZ by lazy { nativeGetMaxXY() }
 
     fun release() {
         mProgram.release()
@@ -82,8 +81,11 @@ class PigRender constructor(val context: Context) {
 
         //model
 //        Matrix.translateM(
-//            mModel, 0, (centerX * 2 - 1f) * mMaxXY[0],
-//            0f, 0f
+//            mModel, 0,
+//            (centerX * 2 - 1f) * mMaxXYZ[0],
+////            0f,
+//            0f,
+//            -mMaxXYZ[1]/2 // (y) 原始角度 z 轴 90度
 ////            ((1.0f - centerY) * 2 - 1)*mMaxXY[1], 0f
 //        )
 
@@ -91,13 +93,11 @@ class PigRender constructor(val context: Context) {
         Matrix.rotateM(mModel, 0, degreeY - pitch * 60f, 1f, 0f, 0f)
         Matrix.rotateM(mModel, 0, -roll * 60f, 0f, 1f, 0f)
         Matrix.rotateM(mModel, 0, yaw * 60f, 0f, 0f, 1f)
-        Matrix.translateM(mModel, 0, -mModelAdjust[0], -mModelAdjust[1], 0f)
 
-
+//        Matrix.translateM(mModel, 0, -mModelAdjust[0], -mModelAdjust[1], 0f)
 //        Matrix.translateM(mModel, 0, centerX * 2 - 1, (1.0f - centerY) * 2 - 1, 0f)
-
-
 //        Matrix.translateM(mModel, 0, -mModelAdjust[0], -mModelAdjust[1], -mModelAdjust[2])
+
         // view
         Matrix.setLookAtM(mView, 0, 0f, 0f, mMaxViewDistance * 1.8f, 0f, 0f, 0f, 0f, 1f, 0f)
         // projection
