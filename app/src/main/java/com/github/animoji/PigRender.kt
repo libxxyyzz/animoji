@@ -5,13 +5,15 @@ import android.content.res.AssetManager
 import android.opengl.GLES20
 import android.opengl.GLES31.*
 import android.opengl.Matrix
+import android.util.Log
 import com.github.animoji.opengl.GLProgram
 import com.github.animoji.opengl.GLShader
+import kotlin.math.*
 
 class PigRender constructor(val context: Context) {
     companion object {
         external fun load(path: String, assert: AssetManager)
-        external fun nativeDraw()
+        external fun nativeDraw(left: Float, right: Float,mouth:Float)
         external fun nativeGetModelAdjust(): FloatArray
         external fun nativeGetMaxViewDistance(): Float
         external fun nativeGetMaxXY(): FloatArray
@@ -68,7 +70,8 @@ class PigRender constructor(val context: Context) {
         roll: Float,
         centerX: Float,
         centerY: Float,
-        scale: Float
+        scale: Float,
+        landmarks: FloatArray
     ) {
 //        Log.e(TAG, "draw: $centerX ------- $centerY")
         mProgram.use()
@@ -109,12 +112,31 @@ class PigRender constructor(val context: Context) {
         val locMvp = mProgram.getUniformLocation("mvpMatrix")
         GLES20.glUniformMatrix4fv(locMvp, 1, false, mMvpMatrix, 0)
 
-        nativeDraw()
-
+        val eyeLeft =
+            max(0f, min(1f, distance(landmarks, 72, 73) * 4 / distance(landmarks, 52, 55)))
+        val eyeRight =
+            max(0f, min(1f, distance(landmarks, 75, 76) * 4 / distance(landmarks, 58, 61)))
+        val mouth = max(
+            0f, min(
+                1f,
+                (distance(landmarks, 98, 102) + distance(landmarks, 97, 103) +
+                        distance(landmarks, 99, 101)
+                        ) / (distance(landmarks, 96, 100) * 2)
+            )
+        )
+        nativeDraw(eyeLeft, eyeRight, mouth)
+        Log.e(TAG, "left is $eyeLeft =------------ : right is $eyeRight")
 //        mVao.bind()
 //        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
 //        mVao.unbind()
 
         assert(glGetError() == GL_NO_ERROR)
     }
+}
+
+fun distance(landmarks: FloatArray, x: Int, y: Int): Float {
+    return sqrt(
+        (landmarks[x * 2] - landmarks[y * 2]).pow(2)
+                + (landmarks[x * 2 + 1] - landmarks[y * 2 + 1]).pow(2)
+    )
 }

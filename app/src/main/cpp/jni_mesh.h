@@ -47,7 +47,7 @@ public:
 
     void get_textures(const aiMaterial *material, aiTextureType type);
 
-    void draw();
+    void draw(float left,float right,float mouth);
 
     virtual ~JNIMesh() {
         delete vao;

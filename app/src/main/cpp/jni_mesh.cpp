@@ -112,14 +112,17 @@ JNIMesh::JNIMesh(const aiScene *scene, aiMesh *mesh) : scene(scene), mesh(mesh) 
 //    if (mesh->mNumAnimMeshes)
     for (int i = 0; i < mesh->mNumAnimMeshes; ++i) {
         auto tMesh = mesh->mAnimMeshes[i];
+        auto name = tMesh->mName.C_Str();
         mWeight.emplace_back(tMesh->mWeight);
         std::vector<JNIVertex> v;
         for (int j = 0; j < tMesh->mNumVertices; ++j) {
-            JNIVertex tv{};
             auto item = tMesh->mVertices[j];
-            tv.ver_x = item.x;
-            tv.ver_y = item.y;
-            tv.ver_z = item.z;
+            JNIVertex tv{item.x, item.y, item.z};
+            if (mesh->HasTextureCoords(0)) {
+                auto temp = mesh->mTextureCoords[0][j];
+                tv.tex_x = temp.x;
+                tv.tex_y = temp.y;
+            }
             v.emplace_back(tv);
         }
         mAniVertex.emplace_back(v);
@@ -157,10 +160,10 @@ JNIMesh::JNIMesh(const aiScene *scene, aiMesh *mesh) : scene(scene), mesh(mesh) 
         get_textures(material, aiTextureType_DIFFUSE);
         get_textures(material, aiTextureType_AMBIENT);
     }
-    if (!mWeight.empty()){
-        mWeight[13] = 1.0;
-        mWeight[14] = 1.0;
-    }
+//    if (!mWeight.empty()) {
+//        mWeight[13] = 1.0;
+//        mWeight[14] = 1.0;
+//    }
 }
 
 void JNIMesh::get_textures(const aiMaterial *material, aiTextureType type) {
@@ -175,24 +178,28 @@ void JNIMesh::get_textures(const aiMaterial *material, aiTextureType type) {
     }
 }
 
-void JNIMesh::draw() {
+void JNIMesh::draw(float left, float right, float mouth) {
     if (vao == nullptr) {
         vao = new JNIVao(vertexes, indices);
     }
-    if (!mWeight.empty()){
+    if (!mWeight.empty()) {
+        mWeight[14] = 1.0f - left;
+        mWeight[13] = 1.0f - right;
+        mWeight[24] = mouth;
         std::vector<JNIVertex> uVertexes = vertexes;
         for (int i = 0; i < mWeight.size(); ++i) {
             auto weight = mWeight[i];
+            if (weight == 0)
+                continue;
             auto vert = mAniVertex[i];
-            for (auto item : vert) {
-                uVertexes[i].ver_x = (1.0f - weight) * uVertexes[i].ver_x + weight * item.ver_x;
-                uVertexes[i].ver_y = (1.0f - weight) * uVertexes[i].ver_y + weight * item.ver_y;
-                uVertexes[i].ver_z = (1.0f - weight) * uVertexes[i].ver_z + weight * item.ver_z;
+            for (int j = 0; j < vert.size(); ++j) {
+                uVertexes[j].ver_x += weight * (vert[j].ver_x - vertexes[j].ver_x);
+                uVertexes[j].ver_y += weight * (vert[j].ver_y - vertexes[j].ver_y);
+                uVertexes[j].ver_z += weight * (vert[j].ver_z - vertexes[j].ver_z);
             }
         }
         vao->update(uVertexes.data(), uVertexes.size() * sizeof(JNIVertex));
     }
-
     int i = 0;
     for (auto &item:textures) {
         glActiveTexture(GL_TEXTURE0 + i);
@@ -206,13 +213,11 @@ void JNIMesh::draw() {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_github_animoji_PigRender_00024Companion_nativeDraw(JNIEnv *env, jobject thiz) {
+Java_com_github_animoji_PigRender_00024Companion_nativeDraw(JNIEnv *env, jobject thiz, jfloat left,
+                                                            jfloat right, jfloat mouth) {
     for (auto mesh : meshes) {
-        mesh->draw();
+        mesh->draw(left, right, mouth);
     }
-//    meshes[0]->draw();
-//    meshes[1]->draw();
-//    meshes[2]->draw();
 }
 extern "C"
 JNIEXPORT jfloatArray JNICALL

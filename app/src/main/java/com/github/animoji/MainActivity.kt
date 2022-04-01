@@ -190,7 +190,7 @@ class MainActivity : FaceDetectorActivity() {
             pigRender.draw(
                 texWidth / texHeight.toFloat(), yaw, pitch, roll,
                 landmarks[46 * 2], landmarks[46 * 2 + 1],
-                faceRect.width() / texWidth.toFloat()
+                faceRect.width() / texWidth.toFloat(),landmarks
             )
             glDisable(GL_DEPTH_TEST)
         }

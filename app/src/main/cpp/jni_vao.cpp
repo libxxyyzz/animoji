@@ -21,7 +21,7 @@ JNIVao::JNIVao(std::vector<JNIVertex> &vertexes, std::vector<unsigned int> &inde
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     glBufferData(GL_ARRAY_BUFFER, vertexes.size() * sizeof(JNIVertex), vertexes.data(),
-                 GL_STATIC_DRAW);
+                 GL_DYNAMIC_DRAW);
 //    glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(JNIVertex), test_vertex,  GL_STATIC_DRAW);
 
     glGenBuffers(1, &index);
