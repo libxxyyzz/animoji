@@ -82,25 +82,16 @@ class PigRender constructor(val context: Context) {
         Matrix.setIdentityM(mView, 0)
         Matrix.setIdentityM(mProjection, 0)
 
-        //model
-//        Matrix.translateM(
-//            mModel, 0,
-//            (centerX * 2 - 1f) * mMaxXYZ[0],
-////            0f,
-//            0f,
-//            -mMaxXYZ[1]/2 // (y) 原始角度 z 轴 90度
-////            ((1.0f - centerY) * 2 - 1)*mMaxXY[1], 0f
-//        )
+
+
+
+
+
 
         Matrix.scaleM(mModel, 0, scale * 1.8f, scale * 1.8f, 1f)
         Matrix.rotateM(mModel, 0, degreeY - pitch * 60f, 1f, 0f, 0f)
         Matrix.rotateM(mModel, 0, -roll * 60f, 0f, 1f, 0f)
         Matrix.rotateM(mModel, 0, yaw * 60f, 0f, 0f, 1f)
-
-//        Matrix.translateM(mModel, 0, -mModelAdjust[0], -mModelAdjust[1], 0f)
-//        Matrix.translateM(mModel, 0, centerX * 2 - 1, (1.0f - centerY) * 2 - 1, 0f)
-//        Matrix.translateM(mModel, 0, -mModelAdjust[0], -mModelAdjust[1], -mModelAdjust[2])
-
         // view
         Matrix.setLookAtM(mView, 0, 0f, 0f, mMaxViewDistance * 1.8f, 0f, 0f, 0f, 0f, 1f, 0f)
         // projection
@@ -108,6 +99,11 @@ class PigRender constructor(val context: Context) {
 
         Matrix.multiplyMM(temp, 0, mView, 0, mModel, 0);
         Matrix.multiplyMM(mMvpMatrix, 0, mProjection, 0, temp, 0)
+
+
+
+
+
 
         val locMvp = mProgram.getUniformLocation("mvpMatrix")
         GLES20.glUniformMatrix4fv(locMvp, 1, false, mMvpMatrix, 0)

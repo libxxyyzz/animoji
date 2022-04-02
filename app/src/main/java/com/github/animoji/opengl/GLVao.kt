@@ -2,6 +2,7 @@ package com.github.animoji.opengl
 
 import android.opengl.GLES20
 import android.opengl.GLES30.*
+import java.nio.ByteBuffer
 import java.nio.FloatBuffer
 
 class GLVao constructor(vertexes: FloatArray,size :Int = 2) {

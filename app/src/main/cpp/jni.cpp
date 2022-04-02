@@ -20,6 +20,18 @@
 //using namespace tinygltf;
 //Model model;
 
+//#include "endian.h"
+//
+//// BYTE_ORDER
+//#ifndef BYTE_ORDER
+//#if defined(ARCH_X86) || defined(ARCH_X86_64) || \
+//    defined(__ARMEL__) || defined(__AARCH64EL__)
+//#define BYTE_ORDER      LITTLE_ENDIAN
+//#elif defined(__ARMEB__) || defined(__AARCH64EB__)
+//#define BYTE_ORDER      BIG_ENDIAN
+//#endif
+//#endif
+
 const char *tag = "animoji_jni";
 
 extern "C"
